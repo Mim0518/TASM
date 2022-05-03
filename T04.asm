@@ -7,20 +7,26 @@ extra segment para public 'data'
 extra ends
 datos segment para public 'data'
     NP db "Tarea T04$"
-    D1 db "Este programa convierte un numero decimal ingresado$"
-    D2 db "Por el usuario a hexadecimal/binario y lo imprime$"
+    D1 db "Este programa realiza conversiones sobre un numero ingresado$"
+    D2 db "Por el usuario, a hexadecimal o binario dependiendo de su seleccion$"
+    D3 db "Insituto Tecnologico de Ciudad Guzman$"
+    D4 db "Ingenieria en Sistemas Computacionales$"
+    D5 db "Aula K03$"
+    D6 db "04 de mayo de 2022$"
+    D7 db "Prof. Estanislao Castillo Horta$"
     NM db "Guillermo Moreno Rivera$"
     PN db "Ingrese un numero dentro del rango de DW (0-65535): ", "$"
     CN db "Escribio una cadena nula, no es un numero$"
     CCS db "Escribio algun simbolo no numerico$"
     OOR db "Escribio un numero fuera de rango$"
-    AC db "Seleccione una opcion de conversion$"
-    AC1 db "1.- Binario 2.- Hexadecimal$"
+    AC db "1.- Binario 2.- Hexadecimal$"
+    AC1 db "Ingrese una opcion: $"
+    ZEROc db "00000000$"
     FIN db "Presione cualquier tecla para probar con otro numero, o ENTER para terminar: ","$"
-    SB db "Hago cosas en binario$"
-    SH db "Hago cosas en hex$"
-    SNV db "No hago nada pq estoy wei$"
+    B db "Hago cosas binarias$"
+    H db "Hago cosas hexadecimales$"
     Num db 6,?,6 dup(?)
+    v dw ?
     SL DB 10,13,24H
 datos ends
 codigo segment para public 'code'
@@ -35,17 +41,17 @@ p0      proc far
         mov ax, extra
         mov es, ax
         
-    ;Limpiar pantalla
-    mov ch, 0
-    mov cl, 0
-    mov dh, 24
-    mov dl, 79
-    mov ah, 6
-    mov al, 0
-    mov bh, 7
-    int 10h
-    ;Posicionar Cursor
-    mov DH,0 ;renglon
+        ;Limpiar pantalla
+        mov ch, 0
+        mov cl, 0
+        mov dh, 24
+        mov dl, 79
+        mov ah, 6
+        mov al, 0
+        mov bh, 7
+        int 10h
+        ;Posicionar Cursor
+        mov DH,0 ;renglon
 	mov DL, 35 ;columna
 	mov AH,2
 	mov BH,0
@@ -54,8 +60,8 @@ p0      proc far
         lea dx, NP
         mov ah, 9
         int 21h
-    ;Posicionar Cursor
-    mov DH,1 ;renglon
+        ;Posicionar Cursor
+        mov DH,1 ;renglon
 	mov DL, 29 ;columna
 	mov AH,2
 	mov BH,0
@@ -64,9 +70,9 @@ p0      proc far
         lea dx, NM
         mov ah, 9
         int 21h
-    ;Posicionar Cursor
-    mov DH,2 ;renglon
-	mov DL, 12 ;columna
+        ;Posicionar Cursor
+        mov DH,2 ;renglon
+	mov DL, 8 ;columna
 	mov AH,2
 	mov BH,0
 	int 10H
@@ -76,144 +82,169 @@ p0      proc far
         int 21h
     ;Posicionar Cursor
     mov DH,3 ;renglon
-	mov DL,13 ;columna
+	mov DL,5 ;columna
 	mov AH,2
 	mov BH,0
 	int 10H
-        ;Desc2
-        lea dx, D2
-        mov ah, 9
-        int 21h
-    ;puntero en media pantalla
-    mov DH, 4 ;renglon
+    ;Desc2
+    lea dx, D2
+    mov ah, 9
+    int 21h
+    ;Posicionar Cursor
+    mov DH,4 ;renglon
+	mov DL,20 ;columna
+	mov AH,2
+	mov BH,0
+	int 10H
+    ;Desc3
+    lea dx, D3
+    mov ah, 9
+    int 21h
+    ;Posicionar Cursor
+    mov DH,5 ;renglon
+	mov DL,19 ;columna
+	mov AH,2
+	mov BH,0
+	int 10H
+    ;Desc4
+    lea dx, D4
+    mov ah, 9
+    int 21h
+    ;Posicionar Cursor
+    mov DH,6 ;renglon
+	mov DL,35 ;columna
+	mov AH,2
+	mov BH,0
+	int 10H
+    ;Desc6
+    lea dx, D5
+    mov ah, 9
+    int 21h
+    ;Posicionar Cursor
+    mov DH,7 ;renglon
+	mov DL,30 ;columna
+	mov AH,2
+	mov BH,0
+	int 10H
+    ;Desc6
+    lea dx, D6
+    mov ah, 9
+    int 21h
+    ;Posicionar Cursor
+    mov DH,8 ;renglon
+	mov DL,23 ;columna
+	mov AH,2
+	mov BH,0
+	int 10H
+    ;Desc7
+    lea dx, D7
+    mov ah, 9
+    int 21h
+
+
+
+
+        ;puntero en media pantalla
+        mov DH, 4 ;renglon
 	mov DL, 0 ;columna
 	mov AH,2
 	mov BH,0
 	int 10H
-Z:
-    ;borrar media pantalla
-    mov CH,12
-	mov CL,0
-	mov DH,24
-	mov DL,79
-	mov AH,6
-	mov AL,0
-	mov BH,7
-	int 10H
-    ;puntero en media pantalla
-    mov DH,12 ;renglon
-	mov DL,0 ;columna
-	mov AH,2
-	mov BH,0
-	int 10H
-        ;PideNum
-        lea dx, PN
-        mov ah, 9
-        int 21h
-        ;leer numero
-        lea dx, offset Num
-        mov ah, 0AH
-        int 21h
-    ;Validacion cadena nula
-    mov bl, 13
-    cmp Num+2, bl
-    je nula
-    ;Revisión de Simbolos y conversión numérica
-    mov bx, dx
-    inc bx
-    lea bx, Num+1
-    xor cx, cx
-    mov cl, [bx]
-    push cx
-    l1:
-        inc bx
-        mov al, [bx]
-        cmp al, 2Fh
-        jl nonum
-        cmp al, 3Ah
-        jg nonum
-        sub [bx], 30h
-    loop l1
-    pop cx
-    dec cx
-    ;Revisión del rango del número
-    mov si, 0AH
-    lea bx, Num+2
-    mov al, [bx]
-    mov ah, 0
-    jcxz fina
-    l3:
-        mul si
-        jo outrange
-        inc bx
-        mov dl, [bx]
-        mov dh, 0
-        add ax,dx
-    loop l3
-    jcxz fina
-    ;Ciclado del menú
-    finalM:
-                lea dx, SL
-                mov ah, 9
-                int 21h
+        jmp X
+        Z:
+                ;borrar media pantalla
+                mov CH,12
+		mov CL,0
+		mov DH,24
+		mov DL,79
+		mov AH,6
+		mov AL,0
+		mov BH,7
+		int 10H
 
-                lea dx, FIN
-                mov ah, 9
-                int 21h
+                ;puntero en media pantalla
+                mov DH,12 ;renglon
+	        mov DL,0 ;columna
+	        mov AH,2
+	        mov BH,0
+	        int 10H
+        ;Meter cadena
+        X:
+                ;puntero en media pantalla
+                mov DH,12 ;renglon
+	        mov DL, 5 ;columna
+	        mov AH,2
+	        mov BH,0
+	        int 10H
 
-                mov ah, 1
-                int 21h
-
-                mov ah, 13
-                cmp ah, al
-                jne Z
-                jmp final
-    ;Impresiones de Validación
-    nula:
-        ;SALTO DE LINEA
-                lea dx, SL
-                mov ah, 9
-                int 21h
-
-                lea dx, CN
-                mov ah, 9
-                int 21h
-
-                lea dx, SL
-                mov ah, 9
-                int 21h
-                jmp finalM
-    nonum:
-                pop cx
-                dec cx
                 ;SALTO DE LINEA
                 lea dx, SL
                 mov ah, 9
                 int 21h
 
-                lea dx, CCS
+                lea dx, PN
                 mov ah, 9
                 int 21h
 
-                lea dx, SL
-                mov ah, 9
-                int 21h
-                jmp finalM
-    outrange:
-        ;SALTO DE LINEA
-                lea dx, SL
-                mov ah, 9
+                lea dx, offset Num
+                mov ah, 0AH
                 int 21h
 
-                lea dx, OOR
-                mov ah, 9
-                int 21h
+                ;Control de excepciones
+                ;lea bx, Num + 1
+                ;mov cl, [bx]
+                ;cmp cl, 1
+                ;jne nula
+                ;Agregar un 0 delante de los numeros de un digito
+                ;lea bx, Num+1
+                ;add [bx], 1H
+                ;inc bx
+                ;mov dx, [bx]
+                ;inc bx
+                ;mov [bx], dx
+                ;dec bx
+                ;mov [bx], 30h
+                ;inc bx
+                ;mov [bx], dx
 
-                lea dx, SL
-                mov ah, 9
-                int 21h
-                jmp finalM
-    fina:
+                ;Revision si nulo
+                mov bl, 13
+                cmp Num+2, bl
+                je nula
+                ;revision de simbolos
+                mov bx, dx
+                inc bx
+                lea bx, Num+1
+                xor cx, cx
+                mov cl, [bx]
+                push cx
+                l1:
+                        inc bx
+                        mov al, [bx]
+                        cmp al, 2Fh
+                        jl nonum
+                        cmp al, 3Ah
+                        jg nonum
+                        sub [bx], 30h
+                loop l1
+                pop cx
+                dec cx
+                ;revisión de rango
+                mov si, 0AH
+                lea bx, Num+2
+                mov al, [bx]
+                mov ah, 0
+                jcxz fina
+                l3:
+                        mul si
+                        jo outrange
+                        inc bx
+                        mov dl, [bx]
+                        mov dh, 0
+                        add ax,dx
+                loop l3
+                mov v, ax
+        fina:
                 jc outrange
 
                 lea dx, SL
@@ -232,39 +263,115 @@ Z:
                 mov ah, 9
                 int 21h
 
-                lea dx, SL
-                mov ah, 9
-                int 21h
-                
                 mov ah, 1
                 int 21h
 
-                mov ah, 1
+                mov ah, 49
                 cmp ah, al
                 je binario
-                
-                mov ah, 2
+
+                mov ah, 50
                 cmp ah, al
-                je hex
-                jne novalido
+                je hexa
+        finalM:
+                lea dx, SL
+                mov ah, 9
+                int 21h
+
+                lea dx, FIN
+                mov ah, 9
+                int 21h
+
+                mov ah, 1
+                int 21h
+
+                mov ah, 13
+                cmp ah, al
+
+                jne Z
+                jmp final
+        nula:
+        ;SALTO DE LINEA
+                lea dx, SL
+                mov ah, 9
+                int 21h
+
+                lea dx, CN
+                mov ah, 9
+                int 21h
+
+                lea dx, SL
+                mov ah, 9
+                int 21h
+                jmp finalM
+        nonum:
+                pop cx
+                dec cx
+                ;SALTO DE LINEA
+                lea dx, SL
+                mov ah, 9
+                int 21h
+
+                lea dx, CCS
+                mov ah, 9
+                int 21h
+
+                lea dx, SL
+                mov ah, 9
+                int 21h
+                jmp finalM
+        outrange:
+        ;SALTO DE LINEA
+                lea dx, SL
+                mov ah, 9
+                int 21h
+
+                lea dx, OOR
+                mov ah, 9
+                int 21h
+
+                lea dx, SL
+                mov ah, 9
+                int 21h
+                jmp finalM
         binario:
-        lea dx, SB
+        lea dx, SL
         mov ah, 9
         int 21h
-        jmp final
-        hex:
-        lea dx, SH
+        xor ax, ax
+        mov ax, v
+        cmp ax, 0
+        je zero
+        mov cx, 0
+        mov bx, 2H
+        cicloBin:
+            mov dx, 0
+            cmp ax, 0
+            je impBin
+            div bx
+            push dx
+            inc cx
+            cmp ax, 0
+        JNE cicloBin
+        mov ah, 2
+        impBin:
+            pop dx
+            mov dh, 0
+            add dl, 30h
+            int 21h
+        loop impBin
+        zero:
+        lea dx, ZEROC
         mov ah, 9
         int 21h
-        jmp final
-        novalido:
-        lea dx, SNV
+        jmp finalM
+        hexa:
+        lea dx, H
         mov ah, 9
         int 21h
-        clc
-        jmp fina
-    final:
-    ret
+        jmp finalM
+        final:
+        ret
 p0 endp
 
 codigo ends
