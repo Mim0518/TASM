@@ -1,3 +1,4 @@
+.186
 pila segment para stack 'stack'
     db 500 DUP(?)
 pila ends
@@ -28,6 +29,7 @@ datos segment para public 'data'
     Num db 6,?,6 dup(?)
     v dw ?
     SL DB 10,13,24H
+    ASCII dw ?
 datos ends
 codigo segment para public 'code'
         assume cs:codigo , ds:datos , es:extra , ss:pila
@@ -191,23 +193,24 @@ p0      proc far
                 int 21h
 
                 ;Control de excepciones
-                ;lea bx, Num + 1
-                ;mov cl, [bx]
-                ;cmp cl, 1
-                ;jne nula
+                lea bx, Num + 1
+                mov cl, [bx]
+                cmp cl, 1
+                jne compNul
                 ;Agregar un 0 delante de los numeros de un digito
-                ;lea bx, Num+1
-                ;add [bx], 1H
-                ;inc bx
-                ;mov dx, [bx]
-                ;inc bx
-                ;mov [bx], dx
-                ;dec bx
-                ;mov [bx], 30h
-                ;inc bx
-                ;mov [bx], dx
+                lea bx, Num+1
+                add [bx], 1H
+                inc bx
+                mov dx, [bx]
+                inc bx
+                mov [bx], dx
+                dec bx
+                mov [bx], 30h
+                inc bx
+                mov [bx], dx
 
                 ;Revision si nulo
+                compNul:
                 mov bl, 13
                 cmp Num+2, bl
                 je nula
@@ -360,15 +363,42 @@ p0      proc far
             add dl, 30h
             int 21h
         loop impBin
+        jmp finalM
         zero:
         lea dx, ZEROC
         mov ah, 9
         int 21h
         jmp finalM
         hexa:
-        lea dx, H
+mov ax, v
+; convert the value in EAX to hexadecimal ASCIIs
+;-----------------------
+    mov di,OFFSET ASCII ; get the offset address
+    mov cl,8            ; number of ASCII
+P1: rol ax,4           ; 1 Nibble (start with highest byte)
+    mov bl,al
+    and bl,0Fh          ; only low-Nibble
+    add bl,30h          ; convert to ASCII
+    cmp bl,39h          ; above 9?
+    jna short P2
+    add bl,7            ; "A" to "F"
+P2: mov [di],bl         ; store ASCII in buffer
+    inc di              ; increase target address
+    dec cl              ; decrease loop counter
+    jnz P1              ; jump if cl is not equal 0 (zeroflag is not set)
+
+lea bx, ASCII
+mov [bx+4], "$"
+;-----------------------
+; Print string
+;-----------------------
+    lea dx, SL
         mov ah, 9
         int 21h
+    mov dx,OFFSET ASCII ; DOS 1+ WRITE STRING TO STANDARD OUTPUT
+    mov ah,9            ; DS:DX->'$'-terminated string
+    int 21h             ; maybe redirected under DOS 2+ for output to file
+                        ; (using pipe character">") or output to printer
         jmp finalM
         final:
         ret
