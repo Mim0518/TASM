@@ -29,7 +29,7 @@ datos segment para public 'data'
     Num db 6,?,6 dup(?)
     v dw ?
     SL DB 10,13,24H
-    ASCII dw ?
+    LETRAS dw ?
 datos ends
 codigo segment para public 'code'
         assume cs:codigo , ds:datos , es:extra , ss:pila
@@ -370,35 +370,31 @@ p0      proc far
         int 21h
         jmp finalM
         hexa:
-mov ax, v
-; convert the value in EAX to hexadecimal ASCIIs
-;-----------------------
-    mov di,OFFSET ASCII ; get the offset address
-    mov cl,8            ; number of ASCII
-P1: rol ax,4           ; 1 Nibble (start with highest byte)
-    mov bl,al
-    and bl,0Fh          ; only low-Nibble
-    add bl,30h          ; convert to ASCII
-    cmp bl,39h          ; above 9?
-    jna short P2
-    add bl,7            ; "A" to "F"
-P2: mov [di],bl         ; store ASCII in buffer
-    inc di              ; increase target address
-    dec cl              ; decrease loop counter
-    jnz P1              ; jump if cl is not equal 0 (zeroflag is not set)
+        mov ax, v
+        mov di,OFFSET LETRAS
+        mov cl,8
+        P1:
+        rol ax,4
+        mov bl,al
+        and bl,0Fh
+        add bl,30h
+        cmp bl,39h
+        jna short P2
+        add bl,7
+        P2:
+        mov [di],bl
+        inc di
+        dec cl
+        jnz P1
 
-lea bx, ASCII
-mov [bx+4], "$"
-;-----------------------
-; Print string
-;-----------------------
-    lea dx, SL
+        lea bx, LETRAS
+        mov [bx+4], "$"
+        lea dx, SL
         mov ah, 9
         int 21h
-    mov dx,OFFSET ASCII ; DOS 1+ WRITE STRING TO STANDARD OUTPUT
-    mov ah,9            ; DS:DX->'$'-terminated string
-    int 21h             ; maybe redirected under DOS 2+ for output to file
-                        ; (using pipe character">") or output to printer
+        mov dx,OFFSET LETRAS
+        mov ah,9
+        int 21h
         jmp finalM
         final:
         ret
